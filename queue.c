@@ -23,7 +23,11 @@ int queue_init(queue_t *queue)
 	queue->free_size = MAX_QUEUE_SIZE;
 	queue->front = 0;
 	queue->rear = 0;
+#if defined __APPLE__
+	pthread_mutex_init(&(queue->lock), 0);
+#elif defined __linux__
 	pthread_spin_init(&(queue->lock), 0);
+#endif
 
 	return 0;
 }
@@ -36,7 +40,11 @@ int queue_destroy(queue_t *queue)
 	queue->free_size = 0;
 	queue->front = 0;
 	queue->rear = 0;
+#if defined __APPLE__
+	pthread_mutex_destroy(&(queue->lock));
+#elif defined __linux__
 	pthread_spin_destroy(&(queue->lock));
+#endif
 
 	return 0;
 }
@@ -69,12 +77,18 @@ int queue_enqueue(queue_t *queue, uint8_t *buffer, uint32_t size)
 		memcpy(queue->buffer, buffer + ramain, ramain);
 		queue->rear = ramain;
 	}
-
+#if defined __APPLE__
+	pthread_mutex_lock(&(queue->lock));
+#elif defined __linux__
 	pthread_spin_lock(&(queue->lock));
+#endif
 	queue->free_size -= size;
-    printf("after enqueue: front = %d, rear = %d, free_size = %d\n", queue->front, queue->rear, queue->free_size);
+	printf("after enqueue: front = %d, rear = %d, free_size = %d\n", queue->front, queue->rear, queue->free_size);
+#if defined __APPLE__
+	pthread_mutex_unlock(&(queue->lock));
+#elif defined __linux__
 	pthread_spin_unlock(&(queue->lock));
-
+#endif
 	return 0;
 }
 
@@ -108,10 +122,18 @@ int queue_dequeue(queue_t *queue, uint8_t *buffer, uint32_t size)
 		queue->front = remain;
 	}
 
+#if defined __APPLE__
+	pthread_mutex_lock(&(queue->lock));
+#elif defined __linux__
 	pthread_spin_lock(&(queue->lock));
+#endif
 	queue->free_size += size;
-    printf("after dequeue: front = %d, rear = %d, free_size = %d\n", queue->front, queue->rear, queue->free_size);
+	printf("after dequeue: front = %d, rear = %d, free_size = %d\n", queue->front, queue->rear, queue->free_size);
+#if defined __APPLE__
+	pthread_mutex_unlock(&(queue->lock));
+#elif defined __linux__
 	pthread_spin_unlock(&(queue->lock));
+#endif
 
 	return 0;
 }

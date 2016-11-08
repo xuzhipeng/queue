@@ -20,7 +20,11 @@ typedef struct queue
 	uint32_t free_size;
 	uint32_t front;
 	uint32_t rear;
+#if defined __APPLE__
+	pthread_mutex_t lock;
+#elif defined __linux__
 	pthread_spinlock_t lock;
+#endif
 } queue_t;
 
 int queue_init(queue_t *queue);
