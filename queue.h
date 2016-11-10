@@ -15,15 +15,16 @@
 
 typedef struct queue
 {
-	uint8_t *buffer;
-	uint32_t total_size;
-	uint32_t free_size;
-	uint32_t front;
-	uint32_t rear;
+    uint8_t *buffer;
+    uint32_t used_size;
+    uint32_t total_size;
+    uint32_t free_size;
+    uint32_t front;
+    uint32_t rear;
 #if defined __APPLE__
-	pthread_mutex_t lock;
+    pthread_mutex_t lock;
 #elif defined __linux__
-	pthread_spinlock_t lock;
+    pthread_spinlock_t lock;
 #endif
 } queue_t;
 
